@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pose Detection</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+        #video {
+            border: 1px solid black;
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pose Detection</h1>
+    <video id="video" autoplay playsinline></video>
+    <script>
+        async function setupCamera() {
+            const video = document.getElementById('video');
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: true
+            });
+            video.srcObject = stream;
+            video.addEventListener('loadeddata', (event) => {
+                setInterval(() => {
+                    captureFrame(video);
+                }, 100);
+            });
+        }
+
+        async function captureFrame(video) {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/jpeg');
+            await fetch('/process_frame', {
+                method: 'POST',
+                body: JSON.stringify({ image: dataURL }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+        }
+
+        setupCamera();
+    </script>
+</body>
+</html>
